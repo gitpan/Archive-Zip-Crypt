@@ -1,6 +1,7 @@
 package Archive::Zip::Crypt;
 use v5.008;
 use strict;
+use Archive::Zip qw/ :CONSTANTS :ERROR_CODES :PKZIP_CONSTANTS /;
 
 =head1 NAME
 
@@ -8,11 +9,11 @@ Archive::Zip::Crypt - Unpacking of password protected archives for Archive::Zip
 
 =head1 VERSION
 
-Version 0.01
+Version 0.02
 
 =cut
 
-our $VERSION = '0.01';
+our $VERSION = '0.02';
 
 
 =head1 SYNOPSIS
@@ -172,20 +173,17 @@ sub _decrypt {
     ${$_[0]} = $out;
 }
 
-package Archive::Zip::Member;
-use strict;
-no warnings 'redefine';
-use Archive::Zip qw( :CONSTANTS );
+no warnings 'redefine';     # Prepare for ugliness
 
 # New public method: set decryption password on a member
-sub password {
+*Archive::Zip::Member::password = sub {
     my ($self, $pw) = @_;
     defined $pw and $self->{password} = $pw;
     $self->{password};
-}
+};
 
 # Replaces original method
-sub readChunk {
+*Archive::Zip::Member::readChunk = sub {
     my ( $self, $chunkSize ) = @_;
 
     if ( $self->readIsDone() ) {
@@ -228,22 +226,19 @@ sub readChunk {
       if $self->readIsDone();
 
     return ( $outputRef, $status );
-}
+};
 
 # Replaces original method. Avoids patching larger methods just to fool them
 # about encryption. Yes, it's ugly :)
-sub isEncrypted {
+*Archive::Zip::Member::isEncrypted = sub {
     return 0 if((caller(1))[3] =~ /::(?:extractToFile(?:Handle|Named))$/);
     shift->bitFlag() & GPBF_ENCRYPTED_MASK;
-}
+};
 
-package Archive::Zip::ZipFileMember;
-use strict;
-no warnings 'redefine';
 
 # Replaces original method. Just takes the 12 bytes of encryption header into
 # account if present
-sub _skipLocalFileHeader {
+*Archive::Zip::ZipFileMember::_skipLocalFileHeader = sub {
     my $self = shift;
     my $header;
     my $bytesRead = $self->fh()->read( $header, LOCAL_FILE_HEADER_LENGTH );
@@ -311,5 +306,6 @@ sub _skipLocalFileHeader {
     }
 
     return AZ_OK;
-}
+};
+
 1;
