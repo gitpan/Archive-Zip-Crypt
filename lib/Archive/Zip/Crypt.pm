@@ -53,7 +53,7 @@ Matthias Bethke, C<< <matthias at towiski.de> >>
 
 =head1 BUGS
 
-None known but highly likelyi to be there. Please report any bugs or feature
+None known but highly likely to be there. Please report any bugs or feature
 requests to C<bug-archive-zip-crypt at rt.cpan.org>, or through the web
 interface at
 L<http://rt.cpan.org/NoAuth/ReportBug.html?Queue=Archive-Zip-Crypt>.  I will be
